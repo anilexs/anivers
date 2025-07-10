@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1,
+    "question": "Vous préférez Japan Expo ou Paris Manga ?",
+    "options": [
+      {
+        "emoji": "1️⃣",
+        "text": "Japan Expo"
+      },
+      {
+        "emoji": "2️⃣",
+        "text": "Paris Manga"
+      }
+    ],
+    "posted": false
+  },
+  {
+    "id": 2,
+    "question": "Quel est le meilleur opening d’anime selon vous ?",
+    "options": [
+      {
+        "emoji": "🔥",
+        "text": "Attack on Titan"
+      },
+      {
+        "emoji": "💥",
+        "text": "Jujutsu Kaisen"
+      },
+      {
+        "emoji": "🌪️",
+        "text": "Demon Slayer"
+      }
+    ],
+    "posted": false
+  }
+]
