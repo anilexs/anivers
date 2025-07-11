@@ -2,6 +2,9 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
+from database import init_db
+
+init_db()
 
 # Lire le token depuis token.txt
 with open("token.txt", "r") as f:

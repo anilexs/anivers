@@ -11,8 +11,8 @@ SONDAGE_CHANNEL_ID = 1392955777643446312  # ID du salon pour poster
 class SondageScheduler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.sondage_hour = 9  # Heure de publication (24h)
-        self.sondage_minute = 0 + 1  # Minute de publication
+        self.sondage_hour = 12 # Heure de publication (24h)
+        self.sondage_minute = 10 + 1  # Minute de publication
         self.next_run = None
         self.already_sent_today = False  # Flag pour éviter doublons
         self.send_sondage_task.start()
@@ -109,10 +109,10 @@ class SondageScheduler(commands.Cog):
         target = now.replace(hour=self.sondage_hour, minute=self.sondage_minute, second=0, microsecond=0)
         if now >= target:
             target += datetime.timedelta(days=1)
-            heure_moins_une = target - timedelta(minutes=1)
-            await interaction.response.send_message(
-                f"📅 Prochain sondage prévu à : **{heure_moins_une.strftime('%H:%M')}** le {heure_moins_une.strftime('%d/%m/%Y')}"
-            )
+        heure_moins_une = target - timedelta(minutes=1)
+        await interaction.response.send_message(
+            f"📅 Prochain sondage prévu à : **{heure_moins_une.strftime('%H:%M')}** le {heure_moins_une.strftime('%d/%m/%Y')}"
+        )
 
 
 async def setup(bot):
