@@ -11,6 +11,8 @@ with open("token.txt", "r") as f:
     TOKEN = f.read().strip()
 
 intents = discord.Intents.default()
+intents.members = True  # Nécessaire pour détecter les nouveaux membres
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Synchronisation slash commands
