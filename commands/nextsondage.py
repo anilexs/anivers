@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-import json
+import sqlite3
 import datetime
 from datetime import timedelta
 
@@ -11,8 +11,8 @@ SONDAGE_CHANNEL_ID = 1392955777643446312  # ID du salon pour poster
 class SondageScheduler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.sondage_hour = 13 # Heure de publication (24h)
-        self.sondage_minute = 31 + 1  # Minute de publication
+        self.sondage_hour = 22 # Heure de publication (24h)
+        self.sondage_minute = 0 + 1  # Minute de publication
         self.next_run = None
         self.already_sent_today = False  # Flag pour éviter doublons
         self.send_sondage_task.start()
@@ -67,26 +67,35 @@ class SondageScheduler(commands.Cog):
 
     async def get_next_sondage(self):
         try:
-            with open("sondages.json", "r", encoding="utf-8") as f:
-                sondages = json.load(f)
-            for s in sondages:
-                if not s.get("posted", False):
-                    return s
+            conn = sqlite3.connect('bot.db')
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, question, options, emojis FROM sondage WHERE posted = 0 ORDER BY id ASC LIMIT 1")
+            row = cursor.fetchone()
+            conn.close()
+            if not row:
+                return None
+            id, question, options_str, emojis_str = row
+            options = options_str.split('%')
+            emojis = [e.replace('\\', '') for e in emojis_str.split('%')]
+            return {
+                'id': id,
+                'question': question,
+                'options': [
+                    {'text': opt, 'emoji': emoji}
+                    for opt, emoji in zip(options, emojis)
+                ]
+            }
         except Exception as e:
             print(f"Erreur lecture sondages: {e}")
             return None
 
     async def mark_sondage_posted(self, sondage_id):
         try:
-            with open("sondages.json", "r+", encoding="utf-8") as f:
-                sondages = json.load(f)
-                for s in sondages:
-                    if s['id'] == sondage_id:
-                        s['posted'] = True
-                        break
-                f.seek(0)
-                json.dump(sondages, f, ensure_ascii=False, indent=2)
-                f.truncate()
+            conn = sqlite3.connect('bot.db')
+            cursor = conn.cursor()
+            cursor.execute("UPDATE sondage SET posted = 1 WHERE id = ?", (sondage_id,))
+            conn.commit()
+            conn.close()
         except Exception as e:
             print(f"Erreur mise à jour sondage : {e}")
 

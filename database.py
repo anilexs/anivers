@@ -24,7 +24,7 @@ def ajouter_sondage(question, options_list, emojis_list):
 
     cursor.execute('''
     INSERT INTO sondage (question, options, emojis, posted)
-    VALUES (?, ?, ?, 1)
+    VALUES (?, ?, ?, 0)
     ''', (question, options, emojis))
     conn.commit()
     conn.close()
