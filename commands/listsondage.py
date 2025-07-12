@@ -1,3 +1,5 @@
+ADMIN_ROLE_ID = 123  # Remplace par l'ID de ton rôle admin
+OWNER_ID = 457553583919857666  # Ton ID utilisateur
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -70,13 +72,21 @@ async def send_sondage_page(interaction, page, author_id, first=False):
     else:
         await interaction.response.edit_message(embed=embed, view=view)
 
-class ListNSondage(commands.Cog):
+class ListSondage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="listnsondage", description="Affiche les sondages non postés avec pagination")
-    async def listnsondage(self, interaction: discord.Interaction):
+    @app_commands.command(name="listsondage", description="Affiche les sondages non postés avec pagination")
+    async def listsondage(self, interaction: discord.Interaction):
+        author = interaction.user
+        guild = interaction.guild
+        admin_role = guild.get_role(ADMIN_ROLE_ID) if guild else None
+        is_admin = admin_role in author.roles if admin_role else False
+        is_owner = author.id == OWNER_ID
+        if not (is_admin or is_owner):
+            await interaction.response.send_message("❌ Tu n'as pas la permission d'utiliser cette commande.", ephemeral=True)
+            return
         await send_sondage_page(interaction, 0, interaction.user.id, first=True)
 
 async def setup(bot):
-    await bot.add_cog(ListNSondage(bot))
+    await bot.add_cog(ListSondage(bot))
