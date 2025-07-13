@@ -1,3 +1,5 @@
+# a ajoute une allert si il a pas de sondage pour le landemain sur un salon
+
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
@@ -8,19 +10,51 @@ from datetime import timedelta
 ROLE_ID = 1392955504338407434  # ID du rôle à mentionner
 SONDAGE_CHANNEL_ID = 1392955777643446312  # ID du salon pour poster
 
+
 class SondageScheduler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.sondage_hour = 22 # Heure de publication (24h)
-        self.sondage_minute = 0 + 1  # Minute de publication
+        self.sondage_hour = 20  # Heure de publication (24h)
+        self.sondage_minute = 47 + 1  # Minute de publication
         self.next_run = None
-        self.already_sent_today = False  # Flag pour éviter doublons
+        self.already_sent_today = False
         self.send_sondage_task.start()
 
     def cog_unload(self):
         self.send_sondage_task.cancel()
 
-    @tasks.loop(seconds=30)  # on check toutes les 30 secondes pour être plus réactif
+    # ✅ Limiter à UNE réaction par utilisateur
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        if payload.channel_id != SONDAGE_CHANNEL_ID:
+            return
+
+        if payload.user_id == self.bot.user.id:
+            return
+
+        channel = self.bot.get_channel(payload.channel_id)
+        if not channel:
+            return
+
+        try:
+            message = await channel.fetch_message(payload.message_id)
+        except Exception as e:
+            print(f"[DEBUG] Erreur fetch message: {e}")
+            return
+
+        if not message.author or message.author.id != self.bot.user.id:
+            return
+
+        # Supprimer toutes les autres réactions du même utilisateur
+        for reaction in message.reactions:
+            if str(reaction.emoji) != str(payload.emoji):
+                try:
+                    await message.remove_reaction(reaction.emoji, discord.Object(id=payload.user_id))
+                    print(f"[DEBUG] Suppression de la réaction {reaction.emoji} pour user {payload.user_id}")
+                except Exception as e:
+                    print(f"[DEBUG] Erreur suppression réaction: {e}")
+
+    @tasks.loop(seconds=30)
     async def send_sondage_task(self):
         now = datetime.datetime.now()
         target = now.replace(hour=self.sondage_hour, minute=self.sondage_minute, second=0, microsecond=0)
@@ -29,7 +63,6 @@ class SondageScheduler(commands.Cog):
 
         diff = (target - now).total_seconds()
 
-        # Envoi du sondage si on est dans la minute cible et pas déjà envoyé aujourd’hui
         if diff <= 60 and not self.already_sent_today:
             print(f"[DEBUG] Envoi sondage à {now.strftime('%H:%M:%S')}")
 
@@ -45,10 +78,8 @@ class SondageScheduler(commands.Cog):
                 options_text = "\n".join([f"{opt['emoji']} {opt['text']}" for opt in sondage['options']])
                 msg = await channel.send(f"{role_mention} 📢 Nouveau sondage du jour :\n**{sondage['question']}**\n\n{options_text}")
 
-                # Ajout des réactions emoji
                 for option in sondage['options']:
                     try:
-                        print(f"Ajout de la réaction {option['emoji']}")
                         await msg.add_reaction(option['emoji'])
                     except discord.errors.HTTPException as e:
                         print(f"Erreur ajout réaction {option['emoji']} : {e}")
@@ -57,7 +88,6 @@ class SondageScheduler(commands.Cog):
                 self.already_sent_today = True
                 self.next_run = target + datetime.timedelta(days=1)
 
-        # Reset flag dès qu’on passe la minute cible
         if diff > 60 and self.already_sent_today:
             self.already_sent_today = False
 
