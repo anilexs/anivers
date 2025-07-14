@@ -68,7 +68,7 @@ async def send_sondage_page(interaction, page, author_id, first=False):
 
     view = SondageView(rows, page, total_pages, author_id)
     if first:
-        await interaction.response.send_message(embed=embed, view=view)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
     else:
         await interaction.response.edit_message(embed=embed, view=view)
 
