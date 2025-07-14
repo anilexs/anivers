@@ -14,8 +14,8 @@ SONDAGE_CHANNEL_ID = 1392955777643446312  # ID du salon pour poster
 class SondageScheduler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.sondage_hour = 10  # Heure de publication (24h)
-        self.sondage_minute = 10 + 1  # Minute de publication
+        self.sondage_hour = 11  # Heure de publication (24h)
+        self.sondage_minute = 15 + 1  # Minute de publication
         self.next_run = None
         self.already_sent_today = False
         self.send_sondage_task.start()
@@ -83,6 +83,16 @@ class SondageScheduler(commands.Cog):
                         await msg.add_reaction(option['emoji'])
                     except discord.errors.HTTPException as e:
                         print(f"Erreur ajout réaction {option['emoji']} : {e}")
+
+                # Créer un fil de discussion sous le message du sondage
+                try:
+                    thread = await msg.create_thread(
+                        name=f"Discussion sondage : {sondage['question'][:40]}",
+                        auto_archive_duration=1440  # 24h
+                    )
+                    await thread.send("N’hésite pas à nous dire pourquoi tu as fait ce choix dans ce sondage !")
+                except Exception as e:
+                    print(f"Erreur création du fil de discussion : {e}")
 
                 await self.mark_sondage_posted(sondage['id'])
                 self.already_sent_today = True

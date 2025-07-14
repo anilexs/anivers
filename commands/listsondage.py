@@ -30,7 +30,7 @@ class PrevButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         view: SondageView = self.view
-        await send_sondage_page(interaction, view.page - 1, view.author_id)
+        await send_sondage_page(interaction, view.page - 1, view.author_id, first=False)
 
 class NextButton(discord.ui.Button):
     def __init__(self):
@@ -38,7 +38,7 @@ class NextButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         view: SondageView = self.view
-        await send_sondage_page(interaction, view.page + 1, view.author_id)
+        await send_sondage_page(interaction, view.page + 1, view.author_id, first=False)
 
 async def send_sondage_page(interaction, page, author_id, first=False):
     per_page = 5
@@ -70,7 +70,11 @@ async def send_sondage_page(interaction, page, author_id, first=False):
     if first:
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
     else:
-        await interaction.response.edit_message(embed=embed, view=view)
+        try:
+            await interaction.response.edit_message(embed=embed, view=view)
+        except discord.InteractionResponded:
+            # Si déjà répondu, on modifie le message original (sécurité)
+            await interaction.edit_original_response(embed=embed, view=view)
 
 class ListSondage(commands.Cog):
     def __init__(self, bot):
