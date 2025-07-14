@@ -15,7 +15,7 @@ class SondageScheduler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.sondage_hour = 11  # Heure de publication (24h)
-        self.sondage_minute = 15 + 1  # Minute de publication
+        self.sondage_minute = 19 + 1  # Minute de publication
         self.next_run = None
         self.already_sent_today = False
         self.send_sondage_task.start()
