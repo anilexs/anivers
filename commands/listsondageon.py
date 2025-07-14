@@ -67,12 +67,12 @@ def get_posted_embed(sondages, page, total_pages):
             embed.add_field(name=f"ID: {s[0]}", value=s[1], inline=False)
     return embed
 
-class ListSondagePosted(commands.Cog):
+class ListSondageOn(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="listsondageposted", description="Liste les sondages déjà postés (5 par page)")
-    async def listsondageposted(self, interaction: discord.Interaction, page: int = 1):
+    @app_commands.command(name="listsondageon", description="Liste les sondages déjà postés (5 par page)")
+    async def listsondageon(self, interaction: discord.Interaction, page: int = 1):
         author = interaction.user
         guild = interaction.guild
         admin_role = guild.get_role(ADMIN_ROLE_ID) if guild else None
@@ -97,4 +97,4 @@ class ListSondagePosted(commands.Cog):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(ListSondagePosted(bot))
+    await bot.add_cog(ListSondageOn(bot))
