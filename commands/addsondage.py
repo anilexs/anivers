@@ -28,11 +28,15 @@ class AddSondage(commands.Cog):
             await interaction.response.send_message("❌ Tu n'as pas la permission d'utiliser cette commande.", ephemeral=True)
             return
 
+
         options_list = [opt.strip() for opt in options.split(';') if opt.strip()]
         emojis_list = [em.strip() for em in emojis.split(';') if em.strip()]
 
         if len(options_list) < 2 or len(options_list) != len(emojis_list):
             await interaction.response.send_message("❌ Il faut au moins 2 options et autant d'emojis que d'options.", ephemeral=True)
+            return
+        if len(set(emojis_list)) != len(emojis_list):
+            await interaction.response.send_message("❌ Il ne faut pas mettre deux fois le même emoji.", ephemeral=True)
             return
 
         try:

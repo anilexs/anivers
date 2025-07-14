@@ -45,6 +45,11 @@ class EditSondageModal(discord.ui.Modal, title="Modifier le sondage"):
         # Remplace les ; par % pour la sauvegarde (cohérence avec l'ajout)
         options_db = self.options_input.value.replace(';', '%')
         emojis_db = self.emojis_input.value.replace(';', '%')
+        # Vérification des doublons d'emojis
+        emojis_list = [em.strip() for em in self.emojis_input.value.split(';') if em.strip()]
+        if len(set(emojis_list)) != len(emojis_list):
+            await interaction.response.send_message("❌ Il ne faut pas mettre deux fois le même emoji.", ephemeral=True)
+            return
         try:
             conn = sqlite3.connect('bot.db')
             cursor = conn.cursor()

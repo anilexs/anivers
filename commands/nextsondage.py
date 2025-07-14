@@ -14,8 +14,8 @@ SONDAGE_CHANNEL_ID = 1392955777643446312  # ID du salon pour poster
 class SondageScheduler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.sondage_hour = 20  # Heure de publication (24h)
-        self.sondage_minute = 47 + 1  # Minute de publication
+        self.sondage_hour = 10  # Heure de publication (24h)
+        self.sondage_minute = 10 + 1  # Minute de publication
         self.next_run = None
         self.already_sent_today = False
         self.send_sondage_task.start()
