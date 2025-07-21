@@ -12,6 +12,36 @@ def init_db():
         posted INTEGER DEFAULT 0
     )
     ''')
+
+    # Table des questions de quiz
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS question_quiz (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question TEXT NOT NULL,
+        options TEXT NOT NULL,           -- Réponses séparées par %
+        correct_index INTEGER NOT NULL   -- Index (0, 1, 2...) de la bonne réponse
+    )
+    ''')
+
+    # Table des thèmes de quiz
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS theme_quiz (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL        -- Nom du thème (ex: "Géographie")
+    )
+    ''')
+
+    # Table de liaison quiz <-> thème
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS link_quiz_theme (
+        quiz_id INTEGER NOT NULL,
+        theme_id INTEGER NOT NULL,
+        PRIMARY KEY (quiz_id, theme_id),
+        FOREIGN KEY (quiz_id) REFERENCES question_quiz(id) ON DELETE CASCADE,
+        FOREIGN KEY (theme_id) REFERENCES theme_quiz(id) ON DELETE CASCADE
+    )
+    ''')
+    
     conn.commit()
     conn.close()
 
