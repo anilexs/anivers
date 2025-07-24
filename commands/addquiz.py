@@ -6,8 +6,6 @@ import sqlite3
 ADMIN_ROLE_ID = 123  # Ton rôle admin
 OWNER_ID = 457553583919857666  # Ton ID
 
-# ----------- UI POUR LA SÉLECTION DE THÈMES -----------
-
 class ThemeSelect(discord.ui.Select):
     def __init__(self, themes: list[str]):
         options = [
@@ -17,21 +15,21 @@ class ThemeSelect(discord.ui.Select):
         super().__init__(
             placeholder="Choisis les thèmes...",
             min_values=1,
-            max_values=len(options),  # Permet sélection illimitée
+            max_values=min(len(options), 25),  # Discord max 25 options dans un select
             options=options
         )
         self.selected_themes = []
 
     async def callback(self, interaction: discord.Interaction):
         self.selected_themes = self.values
-        await interaction.response.defer()  # Délais le traitement (sera géré par le bouton)
+        await interaction.response.defer()  # juste defer car validation via bouton
 
 class ThemeSelectView(discord.ui.View):
     def __init__(self, themes: list[str], timeout=60):
         super().__init__(timeout=timeout)
         self.theme_select = ThemeSelect(themes)
         self.add_item(self.theme_select)
-        self.value = None  # Stockera la sélection finale
+        self.value = None
 
     @discord.ui.button(label="Valider", style=discord.ButtonStyle.green)
     async def submit(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -45,8 +43,6 @@ class ThemeSelectView(discord.ui.View):
             view=None
         )
 
-# ----------- COMMANDE ADDQUIZ -----------
-
 class AddQuiz(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -54,7 +50,6 @@ class AddQuiz(commands.Cog):
     def is_admin_or_owner(self, interaction: discord.Interaction):
         if interaction.user.id == OWNER_ID:
             return True
-
         member = interaction.guild.get_member(interaction.user.id)
         return any(role.id == ADMIN_ROLE_ID for role in member.roles) if member else False
 
@@ -63,6 +58,7 @@ class AddQuiz(commands.Cog):
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM theme_quiz ORDER BY name ASC")
         rows = cursor.fetchall()
+        cursor.close()
         conn.close()
         return [row[0] for row in rows]
 
@@ -104,7 +100,6 @@ class AddQuiz(commands.Cog):
             )
             return
 
-        # Récupération des thèmes
         all_themes = await self.get_theme_choices()
         if not all_themes:
             await interaction.response.send_message(
@@ -113,7 +108,7 @@ class AddQuiz(commands.Cog):
             )
             return
 
-        # Sélecteur de thèmes
+        # Envoie le message initial avec le select + bouton
         view = ThemeSelectView(all_themes)
         await interaction.response.send_message(
             "Sélectionne les thèmes pour cette question :",
@@ -121,9 +116,9 @@ class AddQuiz(commands.Cog):
             ephemeral=True
         )
 
-        # Attente de la sélection
-        timeout = await view.wait()
-        if timeout:
+        # Attente de la validation (bouton)
+        timed_out = await view.wait()
+        if timed_out:
             await interaction.edit_original_response(
                 content="⏰ Temps écoulé, commande annulée.",
                 view=None
@@ -132,7 +127,7 @@ class AddQuiz(commands.Cog):
 
         themes = view.value
 
-        # Insertion du quiz en base de données
+        # Insertion en DB
         conn = sqlite3.connect("bot.db")
         cursor = conn.cursor()
         try:
@@ -164,6 +159,7 @@ class AddQuiz(commands.Cog):
                 view=None
             )
         finally:
+            cursor.close()
             conn.close()
 
 async def setup(bot):

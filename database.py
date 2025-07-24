@@ -9,8 +9,10 @@ def init_db():
         question TEXT NOT NULL,
         options TEXT NOT NULL,
         emojis TEXT NOT NULL,
-        posted INTEGER DEFAULT 0
+        posted INTEGER DEFAULT 0,
+        UNIQUE(question)
     )
+
     ''')
 
     # Table des questions de quiz
