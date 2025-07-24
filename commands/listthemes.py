@@ -7,29 +7,34 @@ import math
 THEMES_PER_PAGE = 8
 
 class ThemePagination(discord.ui.View):
-    def __init__(self, theme_list: list[str]):
+    def __init__(self, theme_data: list[tuple[str, int]]):
         super().__init__(timeout=60)
-        self.theme_list = theme_list
+        self.theme_data = theme_data
         self.current_page = 0
-        self.total_pages = math.ceil(len(self.theme_list) / THEMES_PER_PAGE)
+        self.total_pages = math.ceil(len(self.theme_data) / THEMES_PER_PAGE)
         self.update_buttons_visibility()
 
     def get_page_embed(self):
         start = self.current_page * THEMES_PER_PAGE
         end = start + THEMES_PER_PAGE
-        page_items = self.theme_list[start:end]
-        description = "\n".join(f"- {theme}" for theme in page_items)
+        page_items = self.theme_data[start:end]
+
+        # Nouvelle présentation claire et esthétique
+        description_lines = []
+        for name, count in page_items:
+            description_lines.append(
+                f"📌 **Thème :** `{name}`\n🎯 **Quiz disponibles :** `{count}`\n"
+            )
 
         embed = discord.Embed(
-            title="📚 Liste des thèmes",
-            description=description,
-            color=discord.Color.blurple()
+            title="📚 Liste des thèmes de quiz",
+            description="\n".join(description_lines),
+            color=discord.Color.green()
         )
         embed.set_footer(text=f"Page {self.current_page + 1} / {self.total_pages}")
         return embed
 
     def update_buttons_visibility(self):
-        # Désactive ou cache les boutons si nécessaire
         for child in self.children:
             if isinstance(child, discord.ui.Button):
                 if child.custom_id == "previous":
@@ -51,16 +56,23 @@ class ThemePagination(discord.ui.View):
             self.update_buttons_visibility()
             await interaction.response.edit_message(embed=self.get_page_embed(), view=self)
 
+
 class ListThemes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @app_commands.command(name="listthemes", description="Affiche la liste des thèmes disponibles (avec pagination)")
     async def listthemes(self, interaction: discord.Interaction):
-        # Connexion à la base de données
         conn = sqlite3.connect("bot.db")
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM theme_quiz ORDER BY name ASC")
+
+        cursor.execute("""
+            SELECT t.name, COUNT(l.quiz_id) AS quiz_count
+            FROM theme_quiz t
+            LEFT JOIN link_quiz_theme l ON t.id = l.theme_id
+            GROUP BY t.id
+            ORDER BY t.name ASC;
+        """)
         rows = cursor.fetchall()
         conn.close()
 
@@ -68,10 +80,9 @@ class ListThemes(commands.Cog):
             await interaction.response.send_message("❌ Aucun thème trouvé.")
             return
 
-        themes = [row[0] for row in rows]
-        view = ThemePagination(themes)
+        theme_list = [(row[0], row[1]) for row in rows]
+        view = ThemePagination(theme_list)
 
-        # Si une seule page, ne pas afficher les boutons
         if view.total_pages <= 1:
             await interaction.response.send_message(embed=view.get_page_embed())
         else:
